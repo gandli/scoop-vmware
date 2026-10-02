@@ -1,0 +1,21 @@
+{
+  "version": "26H1u1",
+  "description": "VMware Workstation Pro（最新版）",
+  "homepage": "https://www.vmware.com/products/desktop-hypervisor/workstation-pro",
+  "license": {
+    "identifier": "Freeware",
+    "url": "https://www.broadcom.com/company/legal/licensing"
+  },
+  "url": "https://archive.org/download/vmwareworkstationarchive/26H1/VMware-Workstation-Full-26H1u1-25688693.exe",
+  "hash": "3d775c3c2153600eef4642f95d519a514ba7e861400bda2598352bff792db473",
+  "checkver": {
+    "url": "https://raw.githubusercontent.com/gandli/vmware-downloads/main/data/checksums.txt",
+    "regex": "VMware-Workstation-Full-(\\d{2}H\\d(?:u\\d)?)-\\d+\\.exe"
+  },
+  "installer": {
+    "script": [
+      "$p = Start-Process -FilePath (Join-Path $dir 'VMware-Workstation-Full-26H1u1-25688693.exe') -ArgumentList '/s','/v`\"/qn EULAS_AGREED=1 REBOOT=R`\"' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
+    ]
+  },
+  "notes": "\n- 个人 / 商业用途免费，无需序列号。\n- 安装需要管理员权限，安装脚本会弹 UAC。\n- 安装后从开始菜单启动 VMware Workstation。\n"
+}
