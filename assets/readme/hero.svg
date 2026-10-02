@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" role="img" aria-labelledby="t d">
+  <title id="t">scoop-vmware — Windows 上用 scoop 一键安装 VMware Workstation Pro</title>
+  <desc id="d">左侧是仓库名与安装命令，右侧是 7.0.0 到 26H1u1 的版本阶梯，共 96 个版本，10 个带 Broadcom 官方 SHA256，86 个用 archive.org 的 SHA1。</desc>
+
+  <rect width="1200" height="400" fill="#FAFAF8"/>
+
+  <!-- 左：标题与首个动作 -->
+  <text x="64" y="88" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="20" letter-spacing="2.5" fill="#6B7280">SCOOP BUCKET · WINDOWS</text>
+  <text x="64" y="176" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif" font-size="78" font-weight="800" fill="#14161A">scoop-vmware</text>
+  <rect x="64" y="198" width="92" height="6" fill="#0F6CBD"/>
+  <text x="64" y="250" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif" font-size="27" font-weight="600" fill="#14161A">96 个 VMware Workstation Pro 版本</text>
+  <text x="64" y="286" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif" font-size="27" fill="#4B5563">scoop 一键安装，无需 Broadcom 登录</text>
+
+  <rect x="64" y="312" width="556" height="44" rx="10" fill="#14161A"/>
+  <text x="86" y="341" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="20" fill="#FAFAF8">scoop install vmware-workstation-pro</text>
+
+  <!-- 右：版本阶梯（真实数据） -->
+  <rect x="680" y="56" width="456" height="284" rx="12" fill="#FFFFFF" stroke="#D8D9DD"/>
+  <text x="704" y="106" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="58" font-weight="800" fill="#0F6CBD">96</text>
+  <text x="792" y="106" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="20" fill="#6B7280">个可用版本 · 7.0.0 → 26H1u1</text>
+
+  <rect x="704" y="118" width="200" height="30" rx="8" fill="#E8F1FB" stroke="#0F6CBD"/>
+  <text x="716" y="140" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="19" fill="#0B4F9E">SHA256 官方 ×10</text>
+  <rect x="916" y="118" width="196" height="30" rx="8" fill="#F3F3F4" stroke="#D8D9DD"/>
+  <text x="930" y="140" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="19" fill="#4B5563">SHA1 ×86</text>
+
+  <g>
+    <rect x="704" y="254" width="100" height="46" rx="6" fill="#E5E7EB"/>
+    <text x="754" y="244" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="19" fill="#6B7280">12.5.9</text>
+    <rect x="816" y="226" width="100" height="74" rx="6" fill="#CBD5E1"/>
+    <text x="866" y="216" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="19" fill="#6B7280">17.6.4</text>
+    <rect x="928" y="198" width="100" height="102" rx="6" fill="#8FB4DD"/>
+    <text x="978" y="188" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="19" fill="#4B5563">25H2u1</text>
+    <rect x="1040" y="170" width="72" height="130" rx="6" fill="#0F6CBD"/>
+    <text x="1076" y="160" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="19" font-weight="700" fill="#0B4F9E">26H1u1</text>
+  </g>
+  <line x1="704" y1="300" x2="1112" y2="300" stroke="#D8D9DD" stroke-width="2"/>
+
+  <!-- 页脚元信息 -->
+  <line x1="64" y1="372" x2="1136" y2="372" stroke="#E5E7EB" stroke-width="1.5"/>
+  <text x="64" y="392" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="18" fill="#9CA3AF">gandli/scoop-vmware · 每月 10 日自动更新 · 安装时由 scoop 自动校验 hash</text>
+</svg>

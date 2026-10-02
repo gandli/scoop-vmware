@@ -142,6 +142,27 @@ def manifest(p: dict, desc: str, notes: str = NOTES) -> dict:
     }
 
 
+def render_versions(rows: list[tuple[str, str, str]]) -> str:
+    """把版本清单写回 README 的 markers 之间（供人看，CI 自动维护）。"""
+    readme = Path("README.md")
+    if not readme.exists():
+        return ""
+    text = readme.read_text(encoding="utf-8")
+    start, end = "<!-- versions:start -->", "<!-- versions:end -->"
+    if start not in text or end not in text:
+        return ""
+    body = [f"{len(rows)} 个版本，新版在上：", "",
+            "| 版本 | 安装 | hash |", "|:----|:-----|:-----|"]
+    for version, app, algo in rows:
+        body.append(f"| {version} | `scoop install {app}` | {algo} |")
+    section = f"{start}\n\n" + "\n".join(body) + f"\n\n{end}"
+    readme.write_text(
+        text[: text.index(start)] + section + text[text.index(end) + len(end):],
+        encoding="utf-8",
+    )
+    return f"✓ README 版本清单: {len(rows)} 行"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="从 archive.org 生成 scoop manifest")
     ap.add_argument("--out", default="bucket", help="manifest 输出目录（默认 bucket/）")
@@ -165,6 +186,7 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     rc = 0
     official_n = 0
+    rows: list[tuple[str, str, str]] = []
 
     for version in sorted(found, key=version_key, reverse=True):
         p = found[version]
@@ -194,9 +216,13 @@ def main() -> int:
             encoding="utf-8",
         )
         print(f"✓ {path}  {algo} {p['hash'][:12]}…")
+        rows.append((version, app, "SHA256（官方）" if sha else algo.upper()))
 
     weak = len(found) - official_n
     print(f"共 {len(found)} 个版本：{official_n} 个官方 SHA256，{weak} 个 archive SHA1")
+    note = render_versions(rows)
+    if note:
+        print(note)
     return rc
 
 
