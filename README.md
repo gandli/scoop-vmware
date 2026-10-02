@@ -1,3 +1,7 @@
+# scoop-vmware
+
+用 [Scoop](https://scoop.sh/) 在 Windows 上一键安装任意版本的 VMware Workstation Pro，**免 Broadcom 登录，安装时自动校验 hash**。
+
 <p align="center">
   <img src="./assets/readme/hero.svg" width="100%" alt="scoop-vmware：用 scoop 一键安装 96 个版本的 VMware Workstation Pro，安装时自动校验 Broadcom 官方 SHA256">
 </p>
