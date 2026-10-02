@@ -1,16 +1,16 @@
 {
-  "version": "26H1u1",
-  "description": "VMware Workstation Pro 26H1u1（最新版）",
+  "version": "25H2u1",
+  "description": "VMware Workstation Pro 25H2u1",
   "homepage": "https://www.vmware.com/products/desktop-hypervisor/workstation-pro",
   "license": {
     "identifier": "Freeware",
     "url": "https://www.broadcom.com/company/legal/licensing"
   },
-  "url": "https://archive.org/download/vmwareworkstationarchive/26H1/VMware-Workstation-Full-26H1u1-25688693.exe",
-  "hash": "3d775c3c2153600eef4642f95d519a514ba7e861400bda2598352bff792db473",
+  "url": "https://archive.org/download/vmwareworkstationarchive/25H2/VMware-Workstation-Full-25H2u1-25219725.exe",
+  "hash": "b592c47756d47c932a3ce2c2b83ad3af1fa23ccc1dd1d3166a51bcc1d2bd58e0",
   "installer": {
     "script": [
-      "$p = Start-Process -FilePath (Join-Path $dir 'VMware-Workstation-Full-26H1u1-25688693.exe') -ArgumentList '/s','/v`\"/qn EULAS_AGREED=1 REBOOT=R`\"' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
+      "$p = Start-Process -FilePath (Join-Path $dir 'VMware-Workstation-Full-25H2u1-25219725.exe') -ArgumentList '/s','/v`\"/qn EULAS_AGREED=1 REBOOT=R`\"' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
     ]
   },
   "notes": "\n- 个人 / 商业用途免费，无需序列号。\n- 安装需要管理员权限，安装脚本会弹 UAC。\n- 安装后从开始菜单启动 VMware Workstation。\n- hash 为 Broadcom 官方 SHA256（经 gandli/vmware-downloads 公开），scoop 安装时自动校验。\n"

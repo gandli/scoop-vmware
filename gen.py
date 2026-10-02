@@ -32,6 +32,12 @@ DOWNLOAD_BASE = f"https://archive.org/download/{COLLECTION}"
 UPSTREAM_CHECKSUMS = (
     "https://raw.githubusercontent.com/gandli/vmware-downloads/main/data/checksums.txt"
 )
+
+# 安装包文件名：新式 26H1u1 / 旧式 17.6.4，大小写都收（collection 里两种都有）
+FILE_RE = re.compile(
+    r"^VMware-[Ww]orkstation-[Ff]ull-(\d{2}H\d(?:u\d)?|\d+\.\d+\.\d+)-(\d+)\.exe$"
+)
+LATEST_APP = "vmware-workstation-pro"  # 指向最新版本；历史版本用 -<version> 后缀
 HOMEPAGE = "https://www.vmware.com/products/desktop-hypervisor/workstation-pro"
 LICENSE = {
     "identifier": "Freeware",
@@ -44,20 +50,15 @@ NOTES = (
     "- hash 为 Broadcom 官方 SHA256（经 gandli/vmware-downloads 公开），"
     "scoop 安装时自动校验。\n"
 )
+NOTES_WEAK = NOTES.replace(
+    "- hash 为 Broadcom 官方 SHA256（经 gandli/vmware-downloads 公开），"
+    "scoop 安装时自动校验。\n",
+    "- hash 为 archive.org 的 SHA1：Broadcom 官方 SHA256 校验表未收录此历史版本，"
+    "故退回镜像自带校验值。\n",
+)
 
 # app 名, 文件名 regex, 描述
-APPS = [
-    (
-        "vmware-workstation-pro",
-        re.compile(r"^VMware-Workstation-Full-(\d{2}H\d(?:u\d)?)-(\d+)\.exe$", re.I),
-        "VMware Workstation Pro（最新版）",
-    ),
-    (
-        "vmware-workstation-pro-legacy",
-        re.compile(r"^VMware-[Ww]orkstation-[Ff]ull-(17\.\d+\.\d+)-(\d+)\.exe$"),
-        "VMware Workstation Pro 17.6.4（老系统备用）",
-    ),
-]
+APPS = []
 
 UA = "scoop-vmware-gen/1.0"
 HASH_FIELDS = (("sha1", 40), ("md5", 32))  # 优先更强的
@@ -90,33 +91,37 @@ def version_key(version: str) -> tuple:
     return tuple(int(p) for p in version.split("."))
 
 
-def pick(files: list[dict], pattern: re.Pattern) -> dict | None:
-    """collection 里版本最大的匹配安装包（path 形如 26H1/VMware-...exe）"""
-    best = None
+def pick_all(files: list[dict]) -> dict[str, dict]:
+    """collection 里全部 Windows 安装包：version -> 条目（同版本取最大 build）。"""
+    best: dict[str, tuple] = {}
     for f in files:
         name = f.get("name", "")
         if not name.endswith(".exe"):  # 排除 torrent / 校验和 / 压缩附件
             continue
-        base = name.rsplit("/", 1)[-1]
-        m = pattern.match(base)
+        m = FILE_RE.match(name.rsplit("/", 1)[-1])
         if not m:
             continue
-        key = version_key(m[1])
-        if best is None or key > best[0]:
-            digest = next(
-                (f.get(k, "").lower() for k, n in HASH_FIELDS
-                 if len(f.get(k, "").strip()) == n),
-                "",
-            )
-            best = (key, name, base, m[1], digest)
-    if best is None:
-        return None
+        version, build = m[1], m[2]
+        rank = (version_key(version), int(build))
+        if version in best and rank <= best[version][0]:
+            continue
+        best[version] = (rank, name, f)
     return {
-        "path": best[1], "filename": best[2], "version": best[3], "hash": best[4]
+        v: {
+            "path": e[1],
+            "filename": e[1].rsplit("/", 1)[-1],
+            "version": v,
+            "hash": next(
+                (e[2].get(k, "").strip().lower() for k, n in HASH_FIELDS
+                 if len(e[2].get(k, "").strip()) == n),
+                "",
+            ),
+        }
+        for v, e in best.items()
     }
 
 
-def manifest(p: dict, desc: str) -> dict:
+def manifest(p: dict, desc: str, notes: str = NOTES) -> dict:
     # InstallShield 包 MSI：/s 静默 + /v 转交 MSI 参数；反引号是 PowerShell 的转义引号
     return {
         "version": p["version"],
@@ -133,7 +138,7 @@ def manifest(p: dict, desc: str) -> dict:
                 " -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
             ]
         },
-        "notes": NOTES,
+        "notes": notes,
     }
 
 
@@ -151,33 +156,47 @@ def main() -> int:
     official = {} if args.no_official else official_shas()
     if official:
         print(f"官方 SHA256 校验表: {len(official)} 条")
+    found = pick_all(files)
+    if not found:
+        print("❌ collection 里没找到任何 Workstation 安装包")
+        return 1
+    latest = max(found, key=version_key)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     rc = 0
+    official_n = 0
 
-    for app, pattern, desc in APPS:
-        p = pick(files, pattern)
-        if p is None:
-            print(f"❌ {app}: archive.org 里没找到匹配的安装包")
-            rc = 1
-            continue
+    for version in sorted(found, key=version_key, reverse=True):
+        p = found[version]
         sha = official.get(p["filename"].lower())
+        is_latest = version == latest
         if sha:
-            p["hash"], algo = sha, "sha256(官方)"
-        elif args.strict:
-            print(f"❌ {app} {p['filename']}: 官方 SHA256 校验表里没有它，拒绝发布未验证的 hash")
+            p["hash"], algo, notes = sha, "sha256", NOTES
+            official_n += 1
+        elif args.strict and is_latest:
+            print(f"❌ 最新版 {p['filename']}: 官方 SHA256 校验表里没有它，拒绝发布未验证的 hash")
             rc = 1
             continue
         else:
             algo = "sha1" if len(p["hash"]) == 40 else "md5"
-            print(f"⚠️ {app} {p['version']}: 无官方 SHA256，退回 archive.org {algo}")
+            notes = NOTES_WEAK
+        if not p["hash"]:
+            print(f"❌ {p['filename']}: collection 里没有可用 hash，跳过")
+            rc = 1
+            continue
+        app = LATEST_APP if is_latest else f"{LATEST_APP}-{version}"
+        desc = f"VMware Workstation Pro {version}"
+        if is_latest:
+            desc += "（最新版）"
         path = out / f"{app}.json"
         path.write_text(
-            json.dumps(manifest(p, desc), indent=2, ensure_ascii=False) + "\n",
+            json.dumps(manifest(p, desc, notes), indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-        print(f"✓ {path}  {p['version']}  {algo} {p['hash'][:16]}…")
+        print(f"✓ {path}  {algo} {p['hash'][:12]}…")
 
+    weak = len(found) - official_n
+    print(f"共 {len(found)} 个版本：{official_n} 个官方 SHA256，{weak} 个 archive SHA1")
     return rc
 
 

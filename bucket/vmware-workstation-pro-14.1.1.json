@@ -1,0 +1,17 @@
+{
+  "version": "14.1.1",
+  "description": "VMware Workstation Pro 14.1.1",
+  "homepage": "https://www.vmware.com/products/desktop-hypervisor/workstation-pro",
+  "license": {
+    "identifier": "Freeware",
+    "url": "https://www.broadcom.com/company/legal/licensing"
+  },
+  "url": "https://archive.org/download/vmwareworkstationarchive/14.x/VMware-workstation-full-14.1.1-7528167.exe",
+  "hash": "06e0dd8615f5a085768605f26f31090f552f47e3",
+  "installer": {
+    "script": [
+      "$p = Start-Process -FilePath (Join-Path $dir 'VMware-workstation-full-14.1.1-7528167.exe') -ArgumentList '/s','/v`\"/qn EULAS_AGREED=1 REBOOT=R`\"' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
+    ]
+  },
+  "notes": "\n- 个人 / 商业用途免费，无需序列号。\n- 安装需要管理员权限，安装脚本会弹 UAC。\n- 安装后从开始菜单启动 VMware Workstation。\n- hash 为 archive.org 的 SHA1：Broadcom 官方 SHA256 校验表未收录此历史版本，故退回镜像自带校验值。\n"
+}
