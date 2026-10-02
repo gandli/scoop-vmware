@@ -23,9 +23,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      # 只拉 archive.org metadata（秒级），不下载安装包
+      # 只拉 archive.org metadata + 官方 sha256 表（秒级），不下载安装包
+      # --strict: 拿不到 Broadcom 官方 SHA256 就失败，不发布未验证的 hash
       - name: Generate manifests
-        run: python gen.py --out bucket
+        run: python gen.py --strict --out bucket
 
       - name: Commit
         run: |

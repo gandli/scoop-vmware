@@ -5,14 +5,16 @@
     https://archive.org/metadata/vmwareworkstationarchive
 
 用法：
-    python gen.py                  # 生成 bucket/*.json
-    python gen.py --out bucket     # 指定输出目录
+    python gen.py                  # 生成 bucket/*.json（archive sha1，弱）
+    python gen.py --strict         # 拿不到 Broadcom 官方 SHA256 就报错退出（CI 用）
+    python gen.py --no-official    # 忽略官方 SHA256，纯用 archive.org 的 hash
 
-为什么 hash 用 sha1：
-    archive.org 的 metadata 只提供 md5 / sha1，不提供 sha256（sha256 在 Broadcom 那边，
-    需要登录）。scoop 的 hash 字段按长度自动识别格式，sha1(40) / md5(32) 都接受，
-    取更强的 sha1。为此下载 300 MB 安装包去算 sha256 不划算，故不做。
-    想校验完整性，仍可用仓库自带的 sha256 交叉核对上游 gandli/vmware-downloads。
+hash 从哪来（信任链）：
+    archive.org 只提供 md5/sha1，不提供 sha256（sha256 在 Broadcom 那边需登录）。
+    官方 sha256 从 gandli/vmware-downloads 公开的 data/checksums.txt 取，
+    那边的值来自 Broadcom API，且已与 archive.org 的 md5 做过交叉比对。
+    所以 CI 用 --strict：archive.org 上出现上游还没验证过的新包时直接失败，
+    而不是把一个未经验证的 sha1 当成已验证结果发布。
 """
 
 from __future__ import annotations
@@ -27,6 +29,9 @@ from pathlib import Path
 COLLECTION = "vmwareworkstationarchive"
 META_URL = f"https://archive.org/metadata/{COLLECTION}"
 DOWNLOAD_BASE = f"https://archive.org/download/{COLLECTION}"
+UPSTREAM_CHECKSUMS = (
+    "https://raw.githubusercontent.com/gandli/vmware-downloads/main/data/checksums.txt"
+)
 HOMEPAGE = "https://www.vmware.com/products/desktop-hypervisor/workstation-pro"
 LICENSE = {
     "identifier": "Freeware",
@@ -36,8 +41,8 @@ NOTES = (
     "\n- 个人 / 商业用途免费，无需序列号。\n"
     "- 安装需要管理员权限，安装脚本会弹 UAC。\n"
     "- 安装后从开始菜单启动 VMware Workstation。\n"
-    "- hash 为 archive.org 提供的 SHA1（archive 不提供 SHA256）；"
-    "官方 SHA256 见 gandli/vmware-downloads。\n"
+    "- hash 为 Broadcom 官方 SHA256（经 gandli/vmware-downloads 公开），"
+    "scoop 安装时自动校验。\n"
 )
 
 # app 名, 文件名 regex, 描述
@@ -62,6 +67,19 @@ def fetch_metadata(timeout: int = 60) -> dict:
     req = urllib.request.Request(META_URL, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310
         return json.load(r)
+
+
+def official_shas() -> dict[str, str]:
+    """文件名(小写) -> Broadcom 官方 sha256。一次请求，全量复用。"""
+    req = urllib.request.Request(UPSTREAM_CHECKSUMS, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=60) as r:  # nosec B310
+        text = r.read().decode()
+    out = {}
+    for line in text.splitlines():
+        h, _, name = line.partition("  ")
+        if len(h.strip()) == 64:
+            out[name.strip().lower()] = h.strip().lower()
+    return out
 
 
 def version_key(version: str) -> tuple:
@@ -122,26 +140,42 @@ def manifest(p: dict, desc: str) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description="从 archive.org 生成 scoop manifest")
     ap.add_argument("--out", default="bucket", help="manifest 输出目录（默认 bucket/）")
+    ap.add_argument("--strict", action="store_true",
+                    help="拿不到官方 SHA256 就报错退出（CI 用）")
+    ap.add_argument("--no-official", action="store_true",
+                    help="忽略官方 SHA256，只用 archive.org 的 sha1/md5")
     args = ap.parse_args()
 
     print(f"拉取 {META_URL} …")
     files = fetch_metadata().get("files", [])
+    official = {} if args.no_official else official_shas()
+    if official:
+        print(f"官方 SHA256 校验表: {len(official)} 条")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     rc = 0
 
     for app, pattern, desc in APPS:
         p = pick(files, pattern)
-        if p is None or not p["hash"]:
-            print(f"❌ {app}: archive.org 里没找到带 hash 的匹配安装包")
+        if p is None:
+            print(f"❌ {app}: archive.org 里没找到匹配的安装包")
             rc = 1
             continue
+        sha = official.get(p["filename"].lower())
+        if sha:
+            p["hash"], algo = sha, "sha256(官方)"
+        elif args.strict:
+            print(f"❌ {app} {p['filename']}: 官方 SHA256 校验表里没有它，拒绝发布未验证的 hash")
+            rc = 1
+            continue
+        else:
+            algo = "sha1" if len(p["hash"]) == 40 else "md5"
+            print(f"⚠️ {app} {p['version']}: 无官方 SHA256，退回 archive.org {algo}")
         path = out / f"{app}.json"
         path.write_text(
             json.dumps(manifest(p, desc), indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-        algo = "sha1" if len(p["hash"]) == 40 else "md5"
         print(f"✓ {path}  {p['version']}  {algo} {p['hash'][:16]}…")
 
     return rc

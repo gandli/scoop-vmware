@@ -7,11 +7,11 @@
     "url": "https://www.broadcom.com/company/legal/licensing"
   },
   "url": "https://archive.org/download/vmwareworkstationarchive/26H1/VMware-Workstation-Full-26H1u1-25688693.exe",
-  "hash": "64b03dcd8a1251184271113a00f08bb6b4d2a9e6",
+  "hash": "3d775c3c2153600eef4642f95d519a514ba7e861400bda2598352bff792db473",
   "installer": {
     "script": [
       "$p = Start-Process -FilePath (Join-Path $dir 'VMware-Workstation-Full-26H1u1-25688693.exe') -ArgumentList '/s','/v`\"/qn EULAS_AGREED=1 REBOOT=R`\"' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
     ]
   },
-  "notes": "\n- 个人 / 商业用途免费，无需序列号。\n- 安装需要管理员权限，安装脚本会弹 UAC。\n- 安装后从开始菜单启动 VMware Workstation。\n- hash 为 archive.org 提供的 SHA1（archive 不提供 SHA256）；官方 SHA256 见 gandli/vmware-downloads。\n"
+  "notes": "\n- 个人 / 商业用途免费，无需序列号。\n- 安装需要管理员权限，安装脚本会弹 UAC。\n- 安装后从开始菜单启动 VMware Workstation。\n- hash 为 Broadcom 官方 SHA256（经 gandli/vmware-downloads 公开），scoop 安装时自动校验。\n"
 }
