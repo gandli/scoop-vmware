@@ -1,0 +1,39 @@
+name: update manifests
+
+# 每月 10 号 04:17 UTC 跑一次；新版本发布后 archive.org 收录通常有 1~2 天延迟。
+on:
+  schedule:
+    - cron: "17 4 10 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-manifests
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 只拉 archive.org metadata（秒级），不下载安装包
+      - name: Generate manifests
+        run: python gen.py --out bucket
+
+      - name: Commit
+        run: |
+          if git diff --quiet -- bucket; then
+            echo "已是最新，无需提交"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: sync manifests from archive.org ($(date -u +%Y-%m-%d))"
+          git push
